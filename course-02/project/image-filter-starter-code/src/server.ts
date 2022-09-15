@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
+import auth from './util/middleware/auth';
 
 (async () => {
 
@@ -28,6 +29,25 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
 
   /**************************************************************************** */
+
+
+app.get('/filteredimage', auth, async (req: express.Request, res: express.Response) => {
+  const image_url = String(req.query.image_url);
+
+  if (!image_url) {
+    return res.status(400).send('A valid image URL is required!');
+  }
+
+  try {
+    const filtered_image = await filterImageFromURL(image_url);
+
+    return res.status(200).sendFile(filtered_image), () => {
+      deleteLocalFiles([ filtered_image ]);
+    }
+  } catch (error) {
+    return res.status(422).json({ message: 'Invalid file link! Please check and try again!'});
+  }
+});
 
   //! END @TODO1
   
